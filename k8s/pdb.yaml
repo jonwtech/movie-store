@@ -1,0 +1,34 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: movie-store-api-pdb
+  namespace: movie-store
+  labels:
+    app: movie-store-api
+    component: api
+    app.kubernetes.io/name: movie-store-api-pdb
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: movie-store-platform
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: movie-store-api
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: movie-store-processor-pdb
+  namespace: movie-store
+  labels:
+    app: movie-store-processor
+    component: data-processor
+    app.kubernetes.io/name: movie-store-processor-pdb
+    app.kubernetes.io/component: data-processor
+    app.kubernetes.io/part-of: movie-store-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: movie-store-processor

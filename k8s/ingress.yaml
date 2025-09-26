@@ -1,0 +1,47 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: movie-store-api
+  namespace: movie-store
+  labels:
+    app: movie-store-api
+    component: api
+    app.kubernetes.io/name: movie-store-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: movie-store-platform
+  annotations:
+    # AWS Load Balancer Controller annotations
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '30'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '3'
+    
+    # SSL and security
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/certificate-arn: "REPLACE_WITH_ACM_CERTIFICATE_ARN"
+    
+    # Performance and scaling
+    alb.ingress.kubernetes.io/load-balancer-attributes: |
+      idle_timeout.timeout_seconds=60,
+      routing.http2.enabled=true,
+      access_logs.s3.enabled=true,
+      access_logs.s3.bucket=REPLACE_WITH_ACCESS_LOGS_BUCKET
+    
+    # Rate limiting (if using WAF)
+    # alb.ingress.kubernetes.io/wafv2-acl-arn: "REPLACE_WITH_WAF_ACL_ARN"
+spec:
+  rules:
+  - host: api.movie-store.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: movie-store-api
+            port:
+              number: 80

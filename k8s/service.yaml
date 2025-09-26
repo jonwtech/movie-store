@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: movie-store-api
+  namespace: movie-store
+  labels:
+    app: movie-store-api
+    component: api
+    app.kubernetes.io/name: movie-store-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: movie-store-platform
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: movie-store-api

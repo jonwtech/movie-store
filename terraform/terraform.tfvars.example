@@ -1,0 +1,19 @@
+# Example terraform.tfvars file
+# Copy this to terraform.tfvars and customize for your environment
+
+aws_region   = "eu-west-1"
+environment  = "dev"
+project_name = "movie-store"
+
+# Optional: Set a specific bucket name (will be auto-generated if empty)
+# s3_bucket_name = "my-custom-movie-data-bucket"
+
+# List of AWS account IDs that are allowed to upload movie data
+# Example: ["123456789012", "234567890123"]
+allowed_provider_accounts = []
+
+# Email address to receive validation alerts (optional)
+# notification_email = "admin@yourdomain.com"
+
+# Name of existing EKS cluster (optional - leave empty if using placeholder IAM roles)
+# eks_cluster_name = "my-existing-eks-cluster"
