@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movie-store-processor
+  namespace: movie-store
+  labels:
+    app: movie-store-processor
+    component: data-processor
+    app.kubernetes.io/name: movie-store-processor
+    app.kubernetes.io/component: data-processor
+    app.kubernetes.io/part-of: movie-store-platform
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: movie-store-processor
+  template:
+    metadata:
+      labels:
+        app: movie-store-processor
+        component: data-processor
+        app.kubernetes.io/name: movie-store-processor
+        app.kubernetes.io/component: data-processor
+        app.kubernetes.io/part-of: movie-store-platform
+    spec:
+      serviceAccountName: data-processor
+      
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      
+      containers:
+      - name: processor
+        image: movie-store-processor:latest
+        imagePullPolicy: Always
+        
+        # Environment variables from ConfigMap
+        envFrom:
+        - configMapRef:
+            name: data-processor-config
+        
+        # Environment variables from Secrets
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: DB_HOST
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: DB_NAME
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: DB_PASSWORD
+        - name: REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: redis-secret
+              key: REDIS_HOST
+        # Elasticsearch removed - using PostgreSQL for all queries
+        
+        # Resource limits and requests
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        
+        # Container security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        
+        # Temporary filesystem for logs
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: logs
+          mountPath: /app/logs
+      
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      
+      # Pod anti-affinity for high availability
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - movie-store-processor
+              topologyKey: kubernetes.io/hostname
+      
+      # Graceful termination
+      terminationGracePeriodSeconds: 60
